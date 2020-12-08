@@ -22,6 +22,10 @@ function secret_generator() {
   (date +%s | sha256sum | base64 | head -c 48 ; echo) > /root/.bbb-secret
 }
 
+function config_generator() {
+  printf "Not working yet!"
+}
+
 function prepair_server() {
   if [[ ! -f /root/.bbb-secret ]]
   then
@@ -207,20 +211,22 @@ menu(){
   clear
 echo -ne "
 What do you want to do?
-$(ColorGreen '1)') Prepare server for new instalation
-$(ColorGreen '2)') Connect to private cloud and mount NFS
-$(ColorGreen '3)') Install or Update BigBlueButton
-$(ColorGreen '4)') Apply needed configuration to BBB
-$(ColorGreen '5)') Generate Secret for BBB(You don't need this option!)
+$(ColorGreen '1)') Create config file(config.sh)
+$(ColorGreen '2)') Prepare server for new instalation
+$(ColorGreen '3)') Connect to private cloud and mount NFS
+$(ColorGreen '4)') Install or Update BigBlueButton
+$(ColorGreen '5)') Apply needed configuration to BBB
+$(ColorGreen '6)') Generate Secret for BBB(You don't need this option!)
 $(ColorGreen '0)') Exit
 $(ColorBlue 'Choose an option:') "
         read a
         case $a in
-	        1) prepair_server ; press_any_key ;;
-	        2) check_private_cloud ; press_any_key ;;
-	        3) install_bbb ; press_any_key ;;
-          4) apply-config ; press_any_key ;;
-          5) secret_generator ; press_any_key ;;
+	        1) config_generator ; press_any_key ;;
+	        2) prepair_server ; press_any_key ;;
+	        3) check_private_cloud ; press_any_key ;;
+	        4) install_bbb ; press_any_key ;;
+          5) apply-config ; press_any_key ;;
+          6) secret_generator ; press_any_key ;;
 		0) clear; exit 0 ;;
 		*) echo -e $red"Wrong option."$clear; sleep 1; clear; menu;;
         esac
