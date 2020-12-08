@@ -6,11 +6,7 @@ source /etc/bigbluebutton/bbb-conf/apply-lib.sh
 source ./data.sh
 
 # Variables
-if [[ ! $SCRIPT_ROOT/bbb-secret ]]
-then
-  bbb-conf --secret > $SCRIPT_ROOT/bbb-secret
-fi
-SECRET=$(sed -n -e '/Secret/ s/.*\= *//p' $SCRIPT_ROOT/bbb-secret)
+SECRET=$(cat /root/.bbb-secret)
 
 # Create backup from BBB properties file
 function backup_properties() {
@@ -73,17 +69,17 @@ function apply_settings() {
 
 # Add Vazir font to BBB HTML5 client
 function vazir_font() {
-    HEAD_FILE="/usr/share/meteor/bundle/programs/web.browser/head.html"
-    CDN_LINK="<link href=\"https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v26.0.2/dist/font-face.css\" rel=\"stylesheet\" type=\"text/css\" />"
-    CDN_ISTRUE=$(grep -Fxq "$CDN_LINK" $HEAD_FILE)
-    if [[ ! $CDN_ISTRUE ]]
-    then
-        sed -i "2i$CDN_LINK" $HEAD_FILE
-    fi
-    sleep 1
-    sed -i "s:Source Sans Pro:Vazir:g" $HEAD_FILE
-    echo "  - Apply settings to heade.html ------------------------- [Ok]"
-    sleep 1
+  HEAD_FILE="/usr/share/meteor/bundle/programs/web.browser/head.html"
+  CDN_LINK="<link href=\"https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v26.0.2/dist/font-face.css\" rel=\"stylesheet\" type=\"text/css\" />"
+  CDN_ISTRUE=$(grep -Fxq "$CDN_LINK" $HEAD_FILE)
+  if [[ ! $CDN_ISTRUE ]]
+  then
+      sed -i "2i$CDN_LINK" $HEAD_FILE
+  fi
+  sleep 1
+  sed -i "s:Source Sans Pro:Vazir:g" $HEAD_FILE
+  echo "  - Apply settings to heade.html --------------------------- [Ok]"
+  sleep 1
 }
 
 function change_default_page() {

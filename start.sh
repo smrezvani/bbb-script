@@ -19,6 +19,10 @@ SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
 # My Functions
 ##
 function prepair_server() {
+  if [[ ! -f /root/.bbb-secret ]]
+  then
+    (date +%s | sha256sum | base64 | head -c 48 ; echo) > /root/.bbb-secret
+  fi
   if [[ ! $SHECAN_IS_SET ]]
   then
     printf "Shecan is not Active. Do you want to active it?\n"
@@ -32,12 +36,8 @@ function prepair_server() {
   printf "Update the packages list...\n"
   apt clean && apt update -q
   sleep 1
-  printf "Set Hostname\n"
   (echo "${FQDN}" > /etc/hostname)
   hostname -F /etc/hostname
-  printf "hostname is: $HOSTNAME"
-  sleep 3
-  printf "Upgrade OS..."
   apt update && apt upgrade -y && apt autoremove -y
 cat > /etc/timezone << EOF
 $TIME_ZONE
