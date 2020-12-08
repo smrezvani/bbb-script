@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Change file name to data.sh and change values.
+
+# File's PATH
+SCRIPT_ROOT=/root/bbb-script # Don't change
+BBB_PROP=/usr/share/bbb-web/WEB-INF/classes/bigbluebutton.properties
+HTML5_CONFIG=/usr/share/meteor/bundle/programs/server/assets/app/config/settings.yml
+DEFAULT_PAGE=/var/www/bigbluebutton-default
+
+FQDN=bbb.domain.com # Change to BBB FQDN
+TIME_ZONE=Asia/Tehran # Change to your local time
+
+# OpenConnect
+ocservIP=1.2.3.4
+ocPort=portNumber
+ocUsername=username
+ocPassword=password
+
+# BBB Installation
+eMail=email@domain.com
+turnServer=turn.domain.com
+turnSecret=secretCode
