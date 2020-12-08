@@ -14,6 +14,10 @@ SECRET=$(sed -n -e '/Secret/ s/.*\= *//p' $SCRIPT_ROOT/bbb-secret)
 
 # Create backup from BBB properties file
 function backup_properties() {
+  if [ ! -d $SCRIPT_ROOT/backup/ ]
+  then
+    mkdir -p $SCRIPT_ROOT/backup/
+  fi
   now=$(date +"%m_%d_%Y-%H_%M_%S")
   cp $BBB_PROP $SCRIPT_ROOT/backup/bigbluebutton.properties-$now
   echo "  - Backup bigbluebutton.properties ------------------------ [Ok]"
@@ -70,9 +74,9 @@ function apply_settings() {
 # Add Vazir font to BBB HTML5 client
 function vazir_font() {
     HEAD_FILE="/usr/share/meteor/bundle/programs/web.browser/head.html"
-    CDN_LINK='<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v26.0.2/dist/font-face.css" rel="stylesheet" type="text/css" />'
+    CDN_LINK="<link href=\"https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v26.0.2/dist/font-face.css\" rel=\"stylesheet\" type=\"text/css\" />"
     CDN_ISTRUE=$(grep -Fxq $CDN_LINK $HEAD_FILE)
-    if ! $CDN_ISTRUE
+    if [[ ! $CDN_ISTRUE ]]
     then
         sed -i "2i$CDN_LINK" $HEAD_FILE
     fi
