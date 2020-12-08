@@ -49,7 +49,6 @@ EOF
       No ) break;;
     esac
   done
-  printf "Done! :)"
 }
 
 function active_shecan() {

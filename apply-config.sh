@@ -75,7 +75,7 @@ function apply_settings() {
 function vazir_font() {
     HEAD_FILE="/usr/share/meteor/bundle/programs/web.browser/head.html"
     CDN_LINK="<link href=\"https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v26.0.2/dist/font-face.css\" rel=\"stylesheet\" type=\"text/css\" />"
-    CDN_ISTRUE=$(grep -Fxq $CDN_LINK $HEAD_FILE)
+    CDN_ISTRUE=$(grep -Fxq "$CDN_LINK" $HEAD_FILE)
     if [[ ! $CDN_ISTRUE ]]
     then
         sed -i "2i$CDN_LINK" $HEAD_FILE
