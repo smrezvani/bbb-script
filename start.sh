@@ -18,10 +18,14 @@ SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
 ##
 # My Functions
 ##
+function secret_generator() {
+  (date +%s | sha256sum | base64 | head -c 48 ; echo) > /root/.bbb-secret
+}
+
 function prepair_server() {
   if [[ ! -f /root/.bbb-secret ]]
   then
-    (date +%s | sha256sum | base64 | head -c 48 ; echo) > /root/.bbb-secret
+    secret_generator
   fi
   if [[ ! $SHECAN_IS_SET ]]
   then
@@ -39,9 +43,7 @@ function prepair_server() {
   (echo "${FQDN}" > /etc/hostname)
   hostname -F /etc/hostname
   apt update && apt upgrade -y && apt autoremove -y
-cat > /etc/timezone << EOF
-$TIME_ZONE
-EOF
+  timedatectl set-timezone $TIME_ZONE
   printf "Do you need to connect to NFS?\n"
   select yn in "Yes" "No"; do
     case $yn in
@@ -209,6 +211,7 @@ $(ColorGreen '1)') Prepare server for new instalation
 $(ColorGreen '2)') Connect to private cloud and mount NFS
 $(ColorGreen '3)') Install or Update BigBlueButton
 $(ColorGreen '4)') Apply needed configuration to BBB
+$(ColorGreen '5)') Generate Secret for BBB(You don't need this option!)
 $(ColorGreen '0)') Exit
 $(ColorBlue 'Choose an option:') "
         read a
@@ -217,6 +220,7 @@ $(ColorBlue 'Choose an option:') "
 	        2) check_private_cloud ; press_any_key ;;
 	        3) install_bbb ; press_any_key ;;
           4) apply-config ; press_any_key ;;
+          5) secret_generator ; press_any_key ;;
 		0) clear; exit 0 ;;
 		*) echo -e $red"Wrong option."$clear; sleep 1; clear; menu;;
         esac
