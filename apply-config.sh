@@ -42,7 +42,7 @@ function backup_settings() {
 }
 
 function apply_settings() {
-  API_KEY=$(yq r -i $HTML5_CONFIG private.etherpad.apikey)
+  API_KEY=$(yq r $HTML5_CONFIG private.etherpad.apikey)
   rm -rf $HTML5_CONFIG
   cp $SCRIPT_ROOT/settings.yml $HTML5_CONFIG
 

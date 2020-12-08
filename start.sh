@@ -12,14 +12,14 @@ blue='\e[34m'
 clear='\e[0m'
 
 # Shecan DNS
-SHECAN='nameserver 178.22.122.100'
-SHECAN_IS_SET=$(grep -Fxq $SHECAN /etc/resolv.conf)
+SHECAN="nameserver 178.22.122.100"
+SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
 
 ##
 # My Functions
 ##
 function prepair_server() {
-  if ! $SHECAN_IS_SET
+  if [[ ! $SHECAN_IS_SET]]
   then
     printf "Shecan is not Active. Do you want to active it?\n"
     select yn in "Yes" "No"; do
@@ -49,7 +49,6 @@ EOF
     esac
   done
   printf "Done! :)"
-  sleep 5
 }
 
 function active_shecan() {
