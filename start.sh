@@ -81,56 +81,56 @@ DEFAULT_PAGE=/var/www/bigbluebutton-default
 BBB_PKG=bbb-web
 BBB_CONF_PATH=/etc/bigbluebutton/bbb-conf
 
-TIME_ZONE=
+TIME_ZONE=Asia/Tehran
 
 # BBB Installation
-FQDN=
-eMail=
-turnServer=
-turnSecret=
+FQDN=bbb.domain.com
+eMail=info@domain.com
+turnServer=turn.domain.com
+turnSecret=secret
 
 # OpenConnect
-ocservIP=
-ocPort=
-ocUsername=
-ocPassword=
+ocservIP=0.0.0.0
+ocPort=1234
+ocUsername=user
+ocPassword=pass
 EOF
   fi
 
   # Get input from user
   printf "Input time zone(default: Asia/Tehran): "
-  read TIME_ZONE
-  TIME_ZONE=${TIME_ZONE:-Asia/Tehran}
+  read TZ_INPUT
+  TZ_INPUT=${TZ_INPUT:-Asia/Tehran}
   printf "Input FQDN(example: bbb.domain.com): "
-  read FQDN
+  read BBB_FQDN
   printf "Input email address for Let's Encrypt: "
-  read eMail
+  read E_Mail
   printf "Input turn server FQDN(example: turn.domain.com): "
-  read turnServer
+  read T_Server
   printf "Input turn server secret: "
-  read turnSecret
+  read T_Secret
   printf "\n*** If you dont need openconnect, don't fill inputs. ***\n"
   printf "Input openconnect IP address: "
-  read ocservIP
+  read OC_IP
   printf "Input openconnect Port number: "
-  read ocPort
+  read OC_PORT
   printf "Input openconnect username: "
-  read ocUsername
+  read OC_User
   printf "Input openconnect password: "
-  read ocPassword
+  read OC_Pass
   printf "Creating config file...\n"
   sleep 2
 
   # Change variables
-  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TIME_ZONE" $SCRIPT_PATH/config
-  sed -i "s,^FQDN=.*,FQDN=$FQDN" $SCRIPT_PATH/config
-  sed -i "s,^eMail=.*,eMail=$eMail" $SCRIPT_PATH/config
-  sed -i "s,^turnServer=.*,turnServer=$turnServer" $SCRIPT_PATH/config
-  sed -i "s,^turnSecret=.*,turnSecret=$turnSecret" $SCRIPT_PATH/config
-  sed -i "s,^ocservIP=.*,ocservIP=$ocservIP" $SCRIPT_PATH/config
-  sed -i "s,^ocPort=.*,ocPort=$ocPort" $SCRIPT_PATH/config
-  sed -i "s,^ocUsername=.*,ocUsername=$ocUsername" $SCRIPT_PATH/config
-  sed -i "s,^ocPassword=.*,ocPassword=$ocPassword" $SCRIPT_PATH/config
+  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TZ_INPUT" $SCRIPT_PATH/config
+  sed -i "s,^FQDN=.*,FQDN=$BBB_FQDN" $SCRIPT_PATH/config
+  sed -i "s,^eMail=.*,eMail=$E_Mail" $SCRIPT_PATH/config
+  sed -i "s,^turnServer=.*,turnServer=$T_Server" $SCRIPT_PATH/config
+  sed -i "s,^turnSecret=.*,turnSecret=$T_Secret" $SCRIPT_PATH/config
+  sed -i "s,^ocservIP=.*,ocservIP=$OC_IP" $SCRIPT_PATH/config
+  sed -i "s,^ocPort=.*,ocPort=$OC_PORT" $SCRIPT_PATH/config
+  sed -i "s,^ocUsername=.*,ocUsername=$OC_User" $SCRIPT_PATH/config
+  sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass" $SCRIPT_PATH/config
 
 }
 
