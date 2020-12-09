@@ -98,9 +98,7 @@ EOF
   fi
 
   # Get input from user
-  printf "Input time zone(default: Asia/Tehran): "
-  read TZ_INPUT
-  TZ_INPUT=${TZ_INPUT:-Asia/Tehran}
+  read -p "Input time zone(default: Asia/Tehran): " TZ_INPUT
   printf "Input FQDN(example: bbb.domain.com): "
   read BBB_FQDN
   printf "Input email address for Let's Encrypt: "
@@ -131,7 +129,7 @@ EOF
   sed -i "s,^ocPort=.*,ocPort=$OC_PORT" $SCRIPT_PATH/config
   sed -i "s,^ocUsername=.*,ocUsername=$OC_User" $SCRIPT_PATH/config
   sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass" $SCRIPT_PATH/config
-
+  sleep 20
 }
 
 function secret_generator() {
