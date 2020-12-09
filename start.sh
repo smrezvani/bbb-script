@@ -1,36 +1,172 @@
 #!/bin/bash
 
-##
-# My Variables
-##
-source ./data.sh
+# Script PATH
+SCRIPT_PATH=/root/.bbb-script
 
-# Color variables
-red='\e[31m'
-green='\e[32m'
-blue='\e[34m'
-clear='\e[0m'
+# RUN the script
+RUN() {
 
-# Shecan DNS
-SHECAN="nameserver 178.22.122.100"
-SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
+  # Check for root user
+  if [ $EUID != 0 ]; 
+  then 
+    printf "This script should run as root.\n";
+    sudo -i
+  fi
 
-##
-# My Functions
-##
-function secret_generator() {
-  (date +%s | sha256sum | base64 | head -c 48 ; echo) > /root/.bbb-secret
-}
+  # Check for config file
+  if [[ ! -f $SCRIPT_PATH/config ]]
+  then
+    config_generator
+  fi
 
-function config_generator() {
-  printf "Not working yet!"
-}
+  # Source the config file
+  source $SCRIPT_PATH/config
 
-function prepair_server() {
-  if [[ ! -f /root/.bbb-secret ]]
+  # Check for BBB secret file
+  if [[ ! -f $SCRIPT_PATH/secret ]]
   then
     secret_generator
   fi
+
+  # Check for BBB properties file
+  if [[ ! -f $SCRIPT_PATH/bigbluebutton.properties ]]
+  then
+    install -D /root/bbb-script/bigbluebutton.properties $SCRIPT_PATH
+  fi
+
+  # Check for BBB settings file
+  if [[ ! -f $SCRIPT_PATH/settings.yml ]]
+  then
+    install -D /root/bbb-script/settings.yml $SCRIPT_PATH
+  fi
+
+  # Check for BBB bigbluebutton-default
+  if [[ ! -d $SCRIPT_PATH/bigbluebutton-default/ ]]
+  then
+    mkdir -p $SCRIPT_PATH/bigbluebutton-default/
+    install -D /root/bbb-script/bigbluebutton-default/* $SCRIPT_PATH/bigbluebutton-default/
+  fi
+
+  # Create menu
+  clear
+  menu
+
+}
+
+## Functions ##
+function config_generator() {
+
+  # Check for script path on /root/
+  if [ ! -d $SCRIPT_PATH ]
+  then
+    mkdir -p $SCRIPT_PATH
+  fi
+
+  # create or change config file
+  create_config_file
+
+}
+
+function create_config_file() {
+
+  # If Config file exist just change it. If not exist, create from template then change it.
+  if [[ ! -f $SCRIPT_PATH/config ]]
+  then
+cat > $SCRIPT_PATH/config << EOF
+# File's PATH
+SCRIPT_ROOT=/root/bbb-script
+BBB_PROP=/usr/share/bbb-web/WEB-INF/classes/bigbluebutton.properties
+HTML5_CONFIG=/usr/share/meteor/bundle/programs/server/assets/app/config/settings.yml
+DEFAULT_PAGE=/var/www/bigbluebutton-default
+BBB_PKG=bbb-web
+BBB_CONF_PATH=/etc/bigbluebutton/bbb-conf
+
+TIME_ZONE=
+
+# BBB Installation
+FQDN=
+eMail=
+turnServer=
+turnSecret=
+
+# OpenConnect
+ocservIP=
+ocPort=
+ocUsername=
+ocPassword=
+EOF
+  fi
+
+  # Get input from user
+  printf "Input time zone(default: Asia/Tehran): "
+  read TIME_ZONE
+  TIME_ZONE=${TIME_ZONE:-Asia/Tehran}
+  printf "Input FQDN(example: bbb.domain.com): "
+  read FQDN
+  printf "Input email address for Let's Encrypt: "
+  read eMail
+  printf "Input turn server FQDN(example: turn.domain.com): "
+  read turnServer
+  printf "Input turn server secret: "
+  read turnSecret
+  printf "\n*** If you dont need openconnect, don't fill inputs. ***\n"
+  printf "Input openconnect IP address: "
+  read ocservIP
+  printf "Input openconnect Port number: "
+  read ocPort
+  printf "Input openconnect username: "
+  read ocUsername
+  printf "Input openconnect password: "
+  read ocPassword
+  printf "Creating config file...\n"
+  sleep 2
+
+  # Change variables
+  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TIME_ZONE" $BBB_CONFIG
+  sed -i "s,^FQDN=.*,FQDN=$FQDN" $BBB_CONFIG
+  sed -i "s,^eMail=.*,eMail=$eMail" $BBB_CONFIG
+  sed -i "s,^turnServer=.*,turnServer=$turnServer" $BBB_CONFIG
+  sed -i "s,^turnSecret=.*,turnSecret=$turnSecret" $BBB_CONFIG
+  sed -i "s,^ocservIP=.*,ocservIP=$ocservIP" $BBB_CONFIG
+  sed -i "s,^ocPort=.*,ocPort=$ocPort" $BBB_CONFIG
+  sed -i "s,^ocUsername=.*,ocUsername=$ocUsername" $BBB_CONFIG
+  sed -i "s,^ocPassword=.*,ocPassword=$ocPassword" $BBB_CONFIG
+
+}
+
+function secret_generator() {
+
+  # Check if BBB install or not!
+  if ! dpkg --get-selections | grep -q "^$BBB_PKG[[:space:]]*install$"
+  then
+    if [[ ! -f $SCRIPT_PATH/secret ]]
+    then
+      (date +%s | sha256sum | base64 | head -c 48 ; echo) > $SCRIPT_PATH/secret
+    fi
+  else
+    if [[ ! -f $SCRIPT_PATH/secret ]]
+    then
+      (bbb-conf --secret | grep 'Secret:' | sed 's/^.*: //') > $SCRIPT_PATH/secret
+    fi
+  fi
+
+}
+
+function prepair_server() {
+
+  # Check for hostname
+  if [ "$(hostname)" !== "$FQDN" ]
+  then
+    (echo "${FQDN}" > /etc/hostname)
+    hostname -F /etc/hostname
+  fi
+
+  # Set time zone
+  timedatectl set-timezone $TIME_ZONE
+
+  # Check for Shecan nameservers
+  SHECAN="nameserver 178.22.122.100"
+  SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
   if [[ ! $SHECAN_IS_SET ]]
   then
     printf "Shecan is not Active. Do you want to active it?\n"
@@ -41,87 +177,69 @@ function prepair_server() {
         esac
     done
   fi
-  printf "Update the packages list...\n"
-  apt clean && apt update -q
-  sleep 1
-  (echo "${FQDN}" > /etc/hostname)
-  hostname -F /etc/hostname
-  apt update && apt upgrade -y && apt autoremove -y
-  timedatectl set-timezone $TIME_ZONE
-  printf "Do you need to connect to NFS?\n"
+  apt clean && apt update -q && apt upgrade -y && apt autoremove -y
+  
+  # Check for NFS
+  printf "Should I mount NFS partition?\n"
   select yn in "Yes" "No"; do
     case $yn in
-      Yes ) check_private_cloud; break;;
+      Yes ) check_private_network; break;;
       No ) break;;
     esac
   done
+
 }
 
 function active_shecan() {
-  printf "Change DNS to Shecan...\n"
 cat > /etc/resolv.conf << EOF
 nameserver 178.22.122.100
 nameserver 185.51.200.2
 EOF
-  sleep 2
-  printf "Shecan is activated!\n\n"
 }
 
-function check_private_cloud() {
-  # Maximum number to try
-  ((count = 10))
-  while [[ $count -ne 0 ]] ; do
-    # Try once
-    ping -c 1 192.168.100.21
-    rc=$?
-    if [[ $rc -eq 0 ]]
-    then
-      # If okay, flag to exit loop
-      ((count = 1))
-    fi
-    # So we don't go forever
-    ((count = count - 1))
-  done
+function check_private_network() {
 
-  # Make final determination
-  if [[ $rc -eq 0 ]]
+  # Check private network connection
+  printf "Input the NFS private IP: "
+  read NFS_IP
+  if ping -c1 $NFS_IP 1>/dev/null 2>/dev/null
   then
-    printf "Mount NFS to the server...\n"
     mount_nfs
   else
-    printf "Start to connect to \"Private Cloud\"\n"
-    connect_private_cloud
+    connect_private_network
     mount_nfs
   fi
+
 }
 
 function mount_nfs() {
   if [[ ! -d /nfs/ ]]
   then
-    printf "Create NFS mount point...!"
       mkdir /nfs
   fi
-  if ! grep -q nfs "/etc/fstab";
+  if ( ! grep -q nfs "/etc/fstab" )
   then
     echo '192.168.100.230:/nfs /nfs/ nfs defaults 0 0' >> /etc/fstab
   fi
   mount -a
-  printf "The NFS partition mounted to the server...!"
 }
+ 
+function connect_private_network() {
 
-function connect_private_cloud() {
-  if [[! -f /etc/systemd/system/openconnect.service ]]
+  # Check for openconnect service
+  if [[ ! -f /etc/systemd/system/openconnect.service ]]
   then
     # Check openconnect is installed or not
     OC_PKG=openconnect
     if ! dpkg --get-selections | grep -q "^$OC_PKG[[:space:]]*install$";
     then
-      apt update && apt install $OC_PKG -y
+      apt update -q && apt install $OC_PKG -y
     fi
 
+# Create openconnect service file
 cat > /etc/systemd/system/openconnect.service << EOF
     [Unit]
-    Description=Connect to DarsPlus private cloud
+    Description=Connect to private network
     After=network.target
 
     [Service]
@@ -136,46 +254,52 @@ EOF
     systemctl daemon-reload
     systemctl start openconnect.service
     systemctl enable openconnect.service
-  else
-    printf "Service alredy configured. Check it man before any other change!!!"
   fi
+
 }
 
-function install_bbb() {
-  BBB_PKG=bbb-web
+function install_update() {
+
+  # Check for install or update BBB
   if ! dpkg --get-selections | grep -q "^$BBB_PKG[[:space:]]*install$";
   then
-    printf "For install new BBB you should prepare the sevrer.\n"
-    printf "Do you want to run prepare command?\n"
-    select yn in "Yes" "No"; do
-      case $yn in
-        Yes ) prepair_server; break;;
-        No ) break;;
-      esac
-    done
+    # Install new BBB on clean server
+    prepair_server
+    new_install
+  else
+    # Update existing BBB instalation
+    new_install
   fi
-  new_install
 }
 
 function new_install() {
-  if [[ -f /etc/bigbluebutton/bbb-conf/apply-config.sh ]]
-  then
-      rm -rf /etc/bigbluebutton/bbb-conf/apply-config.sh
-  fi
-
-  wget -qO- https://ubuntu.bigbluebutton.org/bbb-install.sh | bash -s -- -v xenial-22 -s $FQDN -e $eMail -c $turnServer:$turnSecret -w
-  
+  bbb_install_command
   apply-config
 }
 
+function update_everything() {
+  apt update -q && apt upgrade -y && apt autoremove -y
+  sleep 2
+  bbb_install_command
+  apply-config
+}
+
+function bbb_install_command() {
+  wget -qO- https://ubuntu.bigbluebutton.org/bbb-install.sh | bash -s -- -v xenial-22 -s $FQDN -e $eMail -c $turnServer:$turnSecret -w
+}
+
 function apply-config() {
-  chmod +x apply-config.sh
-  cp apply-config.sh /etc/bigbluebutton/bbb-conf/apply-config.sh
+  if [[ -f $BBB_CONF_PATH/apply-config.sh ]]
+  then
+      rm -rf $BBB_CONF_PATH/apply-config.sh
+  fi
+  chmod +x $SCRIPT_ROOT/apply-config.sh
+  cp $SCRIPT_ROOT/apply-config.sh $BBB_CONF_PATH/
   bbb-conf --restart
 }
 
 function press_any_key() {
-  printf "\nPress any key to back to menu..."
+  printf "\n\nPress any key to back to menu...!"
   while [ true ]
     do
     read -n 1
@@ -186,18 +310,11 @@ function press_any_key() {
   done
 }
 
-# Call the menu function
-RUN() {
-  if [ $EUID != 0 ]; 
-  then 
-    printf "This script should run as root.\n";
-    printf "Please enter [sudo] password:\n"
-    sudo -i
-  else
-    clear
-    menu
-  fi
-}
+# Color Variables
+red='\e[31m'
+green='\e[32m'
+blue='\e[34m'
+clear='\e[0m'
 
 # Color Functions
 ColorGreen(){
@@ -211,22 +328,19 @@ menu(){
   clear
 echo -ne "
 What do you want to do?
-$(ColorGreen '1)') Create config file(config.sh)
-$(ColorGreen '2)') Prepare server for new instalation
-$(ColorGreen '3)') Connect to private cloud and mount NFS
-$(ColorGreen '4)') Install or Update BigBlueButton
-$(ColorGreen '5)') Apply needed configuration to BBB
-$(ColorGreen '6)') Generate Secret for BBB(You don't need this option!)
+$(ColorGreen '1)') Generate new config file
+$(ColorGreen '2)') Install or Update BBB
+$(ColorGreen '3)') Connect to private network and mount NFS
+$(ColorGreen '4)') Apply config to BBB
 $(ColorGreen '0)') Exit
 $(ColorBlue 'Choose an option:') "
         read a
         case $a in
-	        1) config_generator ; press_any_key ;;
-	        2) prepair_server ; press_any_key ;;
-	        3) check_private_cloud ; press_any_key ;;
-	        4) install_bbb ; press_any_key ;;
-          5) apply-config ; press_any_key ;;
-          6) secret_generator ; press_any_key ;;
+	        1) create_config_file ; press_any_key ;;
+	        2) install_update ; press_any_key ;;
+	        3) check_private_network ; press_any_key ;;
+	        4) apply-config ; press_any_key ;;
+
 		0) clear; exit 0 ;;
 		*) echo -e $red"Wrong option."$clear; sleep 1; clear; menu;;
         esac

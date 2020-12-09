@@ -1,50 +1,53 @@
 #!/bin/bash
-
 # This script will run every time after reboot BBB
+
 # Pull in the helper functions for configuring BigBlueButton
 source /etc/bigbluebutton/bbb-conf/apply-lib.sh
-source ./data.sh
+
+# The source of configuration
+SCRIPT_PATH=/root/.bbb-script
+source $SCRIPT_PATH/config
 
 # Variables
-SECRET=$(cat /root/.bbb-secret)
+SECRET=$(cat $SCRIPT_PATH/secret)
 
-# Create backup from BBB properties file
+# Create backup BBB properties file
 function backup_properties() {
-  if [ ! -d $SCRIPT_ROOT/backup/ ]
+  if [ ! -d $SCRIPT_PATH/backup/ ]
   then
-    mkdir -p $SCRIPT_ROOT/backup/
+    mkdir -p $SCRIPT_PATH/backup/
   fi
   now=$(date +"%m_%d_%Y-%H_%M_%S")
-  cp $BBB_PROP $SCRIPT_ROOT/backup/bigbluebutton.properties-$now
-  echo "  - Backup bigbluebutton.properties ------------------------ [Ok]"
+  cp $BBB_PROP $SCRIPT_PATH/backup/bigbluebutton.properties-$now
+  printf "  - Backup bigbluebutton.properties ------------------------ [Ok]"
 }
 
+# Apply new values to BBB properties
 function apply_properties() {
   rm -rf $BBB_PROP
-  cp $SCRIPT_ROOT/bigbluebutton.properties $BBB_PROP
+  install -D $SCRIPT_PATH/bigbluebutton.properties $BBB_PROP
   sleep 1
   sed -i "s,^bigbluebutton.web.serverURL=.*,bigbluebutton.web.serverURL=https://$FQDN,g" $BBB_PROP
-  sleep 1
   sed -i "s,^screenshareRtmpServer=.*,screenshareRtmpServer=$FQDN,g" $BBB_PROP
-  sleep 1
   sed -i "s,^securitySalt=.*,securitySalt=$SECRET,g" $BBB_PROP
-
   sleep 1
   chmod 444 $BBB_PROP
-  echo "  - Apply change to bigbluebutton.properties --------------- [Ok]"
+  printf "  - Apply change to bigbluebutton.properties --------------- [Ok]"
   sleep 1
 }
 
+# Create backup BBB settings file
 function backup_settings() {
   now=$(date +"%m_%d_%Y-%H_%M_%S")
-  cp $HTML5_CONFIG $SCRIPT_ROOT/backup/settings.yml-$now
-  echo "  - Backup Settings file ----------------------------------- [Ok]"
+  cp $HTML5_CONFIG $SCRIPT_PATH/backup/settings.yml-$now
+  printf "  - Backup Settings file ----------------------------------- [Ok]"
 }
 
+# Apply new settings to BBB HTML5
 function apply_settings() {
   API_KEY=$(yq r $HTML5_CONFIG private.etherpad.apikey)
   rm -rf $HTML5_CONFIG
-  cp $SCRIPT_ROOT/settings.yml $HTML5_CONFIG
+  install -D $SCRIPT_PATH/settings.yml $HTML5_CONFIG
 
   # Last version of settings
   yq w -i $HTML5_CONFIG public.app.clientTitle DarsPlus Live Session
@@ -83,23 +86,24 @@ function vazir_font() {
 }
 
 function change_default_page() {
-  rm -rf $DEFAULT_PAGE/* && cp -r $SCRIPT_ROOT/bigbluebutton-default/* $DEFAULT_PAGE/
+  rm -rf $DEFAULT_PAGE/*
+  install -D $SCRIPT_PATH/bigbluebutton-default/* $DEFAULT_PAGE/
   printf "  - Install default page for BBB --------------------------- [Ok]\n\n"
   sleep 1
 }
 
 function apply_config() {
-# Latest version of properties
+
 cat << EOF
 ╔══════════════════════════════════════════════╗
 ║                                              ║
 ║           Start to apply configs...!         ║
 ║       This script made for DarsPlus.com      ║
 ║ *** Attention: Don't run on your servers *** ║
+║                                              ║
 ╚══════════════════════════════════════════════╝
-
 EOF
-  printf "This script will run in 5 sec. Press Ctrl+C if you want to stop running the script!!!\n\n"
+  printf "\nThis script will run in 5 sec. Press Ctrl+C if you want to stop running the script!!!\n\n"
   sleep 5
   
   backup_properties
