@@ -122,15 +122,15 @@ EOF
   sleep 2
 
   # Change variables
-  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TIME_ZONE" $BBB_CONFIG
-  sed -i "s,^FQDN=.*,FQDN=$FQDN" $BBB_CONFIG
-  sed -i "s,^eMail=.*,eMail=$eMail" $BBB_CONFIG
-  sed -i "s,^turnServer=.*,turnServer=$turnServer" $BBB_CONFIG
-  sed -i "s,^turnSecret=.*,turnSecret=$turnSecret" $BBB_CONFIG
-  sed -i "s,^ocservIP=.*,ocservIP=$ocservIP" $BBB_CONFIG
-  sed -i "s,^ocPort=.*,ocPort=$ocPort" $BBB_CONFIG
-  sed -i "s,^ocUsername=.*,ocUsername=$ocUsername" $BBB_CONFIG
-  sed -i "s,^ocPassword=.*,ocPassword=$ocPassword" $BBB_CONFIG
+  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TIME_ZONE" $SCRIPT_PATH/config
+  sed -i "s,^FQDN=.*,FQDN=$FQDN" $SCRIPT_PATH/config
+  sed -i "s,^eMail=.*,eMail=$eMail" $SCRIPT_PATH/config
+  sed -i "s,^turnServer=.*,turnServer=$turnServer" $SCRIPT_PATH/config
+  sed -i "s,^turnSecret=.*,turnSecret=$turnSecret" $SCRIPT_PATH/config
+  sed -i "s,^ocservIP=.*,ocservIP=$ocservIP" $SCRIPT_PATH/config
+  sed -i "s,^ocPort=.*,ocPort=$ocPort" $SCRIPT_PATH/config
+  sed -i "s,^ocUsername=.*,ocUsername=$ocUsername" $SCRIPT_PATH/config
+  sed -i "s,^ocPassword=.*,ocPassword=$ocPassword" $SCRIPT_PATH/config
 
 }
 
