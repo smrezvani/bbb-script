@@ -66,7 +66,7 @@ function apply_settings() {
   sleep 1
   chmod 444 $HTML5_CONFIG
   chown 995:995 $HTML5_CONFIG
-  echo "  - Apply new seeting to BBB setting.yml ------------------- [Ok]\n"
+  printf "  - Apply new seeting to BBB setting.yml ------------------- [Ok]\n"
   sleep 1
 }
 
@@ -81,7 +81,7 @@ function vazir_font() {
   fi
   sleep 1
   sed -i "s:Source Sans Pro:Vazir:g" $HEAD_FILE
-  echo "  - Apply settings to heade.html --------------------------- [Ok]\n"
+  printf "  - Apply settings to heade.html --------------------------- [Ok]\n"
   sleep 1
 }
 
