@@ -16,7 +16,7 @@
 
 ```
 git clone https://github.com/smrezvani/bbb-script.git && cd bbb-script
-chmod +x new-server.sh
+chmod +x start.sh
 ./start.sh
 ```
 
