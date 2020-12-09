@@ -98,7 +98,9 @@ EOF
   fi
 
   # Get input from user
-  read -p "Input time zone(default: Asia/Tehran): " TZ_INPUT
+  printf "Input time zone(default: Asia/Tehran): "
+  read TZ_INPUT
+  TZ_INPUT=${TZ_INPUT:-Asia/Tehran}
   printf "Input FQDN(example: bbb.domain.com): "
   read BBB_FQDN
   printf "Input email address for Let's Encrypt: "
@@ -120,16 +122,16 @@ EOF
   sleep 2
 
   # Change variables
-  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TZ_INPUT" $SCRIPT_PATH/config
-  sed -i "s,^FQDN=.*,FQDN=$BBB_FQDN" $SCRIPT_PATH/config
-  sed -i "s,^eMail=.*,eMail=$E_Mail" $SCRIPT_PATH/config
-  sed -i "s,^turnServer=.*,turnServer=$T_Server" $SCRIPT_PATH/config
-  sed -i "s,^turnSecret=.*,turnSecret=$T_Secret" $SCRIPT_PATH/config
-  sed -i "s,^ocservIP=.*,ocservIP=$OC_IP" $SCRIPT_PATH/config
-  sed -i "s,^ocPort=.*,ocPort=$OC_PORT" $SCRIPT_PATH/config
-  sed -i "s,^ocUsername=.*,ocUsername=$OC_User" $SCRIPT_PATH/config
-  sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass" $SCRIPT_PATH/config
-  sleep 20
+  sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TZ_INPUT,g" $SCRIPT_PATH/config
+  sed -i "s,^FQDN=.*,FQDN=$BBB_FQDN,g" $SCRIPT_PATH/config
+  sed -i "s,^eMail=.*,eMail=$E_Mail,g" $SCRIPT_PATH/config
+  sed -i "s,^turnServer=.*,turnServer=$T_Server,g" $SCRIPT_PATH/config
+  sed -i "s,^turnSecret=.*,turnSecret=$T_Secret,g" $SCRIPT_PATH/config
+  sed -i "s,^ocservIP=.*,ocservIP=$OC_IP,g" $SCRIPT_PATH/config
+  sed -i "s,^ocPort=.*,ocPort=$OC_PORT,g" $SCRIPT_PATH/config
+  sed -i "s,^ocUsername=.*,ocUsername=$OC_User,g" $SCRIPT_PATH/config
+  sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass,g" $SCRIPT_PATH/config
+
 }
 
 function secret_generator() {
