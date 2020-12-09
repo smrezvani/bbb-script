@@ -31,20 +31,20 @@ RUN() {
   # Check for BBB properties file
   if [[ ! -f $SCRIPT_PATH/bigbluebutton.properties ]]
   then
-    install -D /root/bbb-script/bigbluebutton.properties $SCRIPT_PATH
+    cp /root/bbb-script/bigbluebutton.properties $SCRIPT_PATH
   fi
 
   # Check for BBB settings file
   if [[ ! -f $SCRIPT_PATH/settings.yml ]]
   then
-    install -D /root/bbb-script/settings.yml $SCRIPT_PATH
+    cp /root/bbb-script/settings.yml $SCRIPT_PATH
   fi
 
   # Check for BBB bigbluebutton-default
   if [[ ! -d $SCRIPT_PATH/bigbluebutton-default/ ]]
   then
     mkdir -p $SCRIPT_PATH/bigbluebutton-default/
-    install -D /root/bbb-script/bigbluebutton-default/* $SCRIPT_PATH/bigbluebutton-default/
+    cp -r /root/bbb-script/bigbluebutton-default/* $SCRIPT_PATH/bigbluebutton-default/
   fi
 
   # Create menu
@@ -88,12 +88,6 @@ FQDN=bbb.domain.com
 eMail=info@domain.com
 turnServer=turn.domain.com
 turnSecret=secret
-
-# OpenConnect
-ocservIP=0.0.0.0
-ocPort=1234
-ocUsername=user
-ocPassword=pass
 EOF
   fi
 
@@ -109,16 +103,6 @@ EOF
   read T_Server
   printf "Input turn server secret: "
   read T_Secret
-  printf "\n*** If you dont need openconnect, don't fill inputs. ***\n"
-  printf "Input openconnect IP address: "
-  read OC_IP
-  printf "Input openconnect Port number: "
-  read OC_PORT
-  printf "Input openconnect username: "
-  read OC_User
-  printf "Input openconnect password: "
-  read OC_Pass
-  printf "Creating config file...\n"
   sleep 2
 
   # Change variables
@@ -127,11 +111,8 @@ EOF
   sed -i "s,^eMail=.*,eMail=$E_Mail,g" $SCRIPT_PATH/config
   sed -i "s,^turnServer=.*,turnServer=$T_Server,g" $SCRIPT_PATH/config
   sed -i "s,^turnSecret=.*,turnSecret=$T_Secret,g" $SCRIPT_PATH/config
-  sed -i "s,^ocservIP=.*,ocservIP=$OC_IP,g" $SCRIPT_PATH/config
-  sed -i "s,^ocPort=.*,ocPort=$OC_PORT,g" $SCRIPT_PATH/config
-  sed -i "s,^ocUsername=.*,ocUsername=$OC_User,g" $SCRIPT_PATH/config
-  sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass,g" $SCRIPT_PATH/config
-
+  printf "Config file created successfully!"
+  sleep 2
 }
 
 function secret_generator() {
@@ -226,6 +207,9 @@ function mount_nfs() {
  
 function connect_private_network() {
 
+  create_openconnect_config
+  sleep 1
+  source $SCRIPT_PATH/openconnect
   # Check for openconnect service
   if [[ ! -f /etc/systemd/system/openconnect.service ]]
   then
@@ -244,8 +228,8 @@ cat > /etc/systemd/system/openconnect.service << EOF
 
     [Service]
     Type=simple
-    Environment=password=$ocPassword
-    ExecStart=/bin/sh -c 'echo $password | sudo openconnect --passwd-on-stdin --user=$ocUsername --no-cert-check https://$ocservIP:$ocPort'
+    Environment=password=$OC_PASS
+    ExecStart=/bin/sh -c 'echo $password | sudo openconnect --passwd-on-stdin --user=$OC_USER --no-cert-check https://$OC_IP:$OC_PORT'
     Restart=always
 
     [Install]
@@ -256,6 +240,41 @@ EOF
     systemctl enable openconnect.service
   fi
 
+}
+
+function create_openconnect_config() {
+
+  # If Config file exist just change it. If not exist, create from template then change it.
+  if [[ ! -f $SCRIPT_PATH/openconnect ]]
+  then
+cat > $SCRIPT_PATH/openconnect << EOF
+# OpenConnect
+ocservIP=0.0.0.0
+ocPort=1234
+ocUsername=user
+ocPassword=pass
+EOF
+  fi
+
+  # Get input from user
+  printf "Input openconnect IP address: "
+  read OC_IP
+  printf "Input openconnect Port number: "
+  read OC_PORT
+  printf "Input openconnect username: "
+  read OC_User
+  printf "Input openconnect password: "
+  read OC_Pass
+  printf "Creating config file...\n"
+  sleep 2
+
+  # Change variables
+  sed -i "s,^ocservIP=.*,ocservIP=$OC_IP,g" $SCRIPT_PATH/openconnect
+  sed -i "s,^ocPort=.*,ocPort=$OC_PORT,g" $SCRIPT_PATH/openconnect
+  sed -i "s,^ocUsername=.*,ocUsername=$OC_User,g" $SCRIPT_PATH/openconnect
+  sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass,g" $SCRIPT_PATH/openconnect
+  printf "Config file created successfully!"
+  sleep 2
 }
 
 function install_update() {
