@@ -155,7 +155,7 @@ function secret_generator() {
 function prepair_server() {
 
   # Check for hostname
-  if [ "$(hostname)" !== "$FQDN" ]
+  if [ "$(hostname)" != "$FQDN" ]
   then
     (echo "${FQDN}" > /etc/hostname)
     hostname -F /etc/hostname
