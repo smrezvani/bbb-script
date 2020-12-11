@@ -187,6 +187,8 @@ function check_private_network() {
   then
     mount_nfs
   else
+    printf "You don't have access to NFS private network\n"
+    printf "Create openconnect config flie: \n"
     connect_private_network
     mount_nfs
   fi
@@ -200,7 +202,7 @@ function mount_nfs() {
   fi
   if ( ! grep -q nfs "/etc/fstab" )
   then
-    echo '192.168.100.230:/nfs /nfs/ nfs defaults 0 0' >> /etc/fstab
+    echo '$NFS_IP:/nfs /nfs/ nfs defaults 0 0' >> /etc/fstab
   fi
   mount -a
 }
@@ -266,15 +268,15 @@ EOF
   printf "Input openconnect password: "
   read OC_Pass
   printf "Creating config file...\n"
-  sleep 2
+  sleep 1
 
   # Change variables
   sed -i "s,^ocservIP=.*,ocservIP=$OC_IP,g" $SCRIPT_PATH/openconnect
   sed -i "s,^ocPort=.*,ocPort=$OC_PORT,g" $SCRIPT_PATH/openconnect
   sed -i "s,^ocUsername=.*,ocUsername=$OC_User,g" $SCRIPT_PATH/openconnect
   sed -i "s,^ocPassword=.*,ocPassword=$OC_Pass,g" $SCRIPT_PATH/openconnect
-  printf "Config file created successfully!"
-  sleep 2
+  printf "Config file created successfully!\n\n"
+  sleep 1
 }
 
 function install_update() {
