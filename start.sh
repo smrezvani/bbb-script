@@ -145,6 +145,20 @@ function prepair_server() {
   # Set time zone
   timedatectl set-timezone $TIME_ZONE
 
+  check_shecan
+  
+  # Check for NFS
+  printf "Should I mount NFS partition?\n"
+  select yn in "Yes" "No"; do
+    case $yn in
+      Yes ) check_private_network; break;;
+      No ) break;;
+    esac
+  done
+
+}
+
+function check_shecan() {
   # Check for Shecan nameservers
   SHECAN="nameserver 178.22.122.100"
   SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
@@ -159,16 +173,6 @@ function prepair_server() {
     done
   fi
   apt clean && apt update -q && apt upgrade -y && apt autoremove -y
-  
-  # Check for NFS
-  printf "Should I mount NFS partition?\n"
-  select yn in "Yes" "No"; do
-    case $yn in
-      Yes ) check_private_network; break;;
-      No ) break;;
-    esac
-  done
-
 }
 
 function active_shecan() {
@@ -294,6 +298,12 @@ function install_update() {
 }
 
 function new_install() {
+  bbb_install_command
+  apply-config
+}
+
+function update_bbb() {
+  check_shecan
   bbb_install_command
   apply-config
 }
