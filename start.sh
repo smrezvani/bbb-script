@@ -20,6 +20,8 @@ RUN() {
   fi
 
   # Source the config file
+  # shellcheck source=config
+  # shellcheck disable=SC1091
   source $SCRIPT_PATH/config
 
   # Check for BBB secret file
@@ -78,39 +80,38 @@ SCRIPT_ROOT=/root/bbb-script
 BBB_PROP=/usr/share/bbb-web/WEB-INF/classes/bigbluebutton.properties
 HTML5_CONFIG=/usr/share/meteor/bundle/programs/server/assets/app/config/settings.yml
 DEFAULT_PAGE=/var/www/bigbluebutton-default
-BBB_PKG=bbb-web
 BBB_CONF_PATH=/etc/bigbluebutton/bbb-conf
 
 TIME_ZONE=Asia/Tehran
 
 # BBB Installation
 FQDN=bbb.domain.com
-eMail=info@domain.com
-turnServer=turn.domain.com
-turnSecret=secret
+E_Mail=info@domain.com
+T_Server=turn.domain.com
+T_Secret=secret
 EOF
   fi
 
   # Get input from user
   printf "Input time zone(default: Asia/Tehran): "
-  read TZ_INPUT
+  read -r TZ_INPUT
   TZ_INPUT=${TZ_INPUT:-Asia/Tehran}
   printf "Input FQDN(example: bbb.domain.com): "
-  read BBB_FQDN
+  read -r BBB_FQDN
   printf "Input email address for Let's Encrypt: "
-  read E_Mail
+  read -r E_Mail
   printf "Input turn server FQDN(example: turn.domain.com): "
-  read T_Server
+  read -r T_Server
   printf "Input turn server secret: "
-  read T_Secret
+  read -r T_Secret
   sleep 2
 
   # Change variables
   sed -i "s,^TIME_ZONE=.*,TIME_ZONE=$TZ_INPUT,g" $SCRIPT_PATH/config
   sed -i "s,^FQDN=.*,FQDN=$BBB_FQDN,g" $SCRIPT_PATH/config
-  sed -i "s,^eMail=.*,eMail=$E_Mail,g" $SCRIPT_PATH/config
-  sed -i "s,^turnServer=.*,turnServer=$T_Server,g" $SCRIPT_PATH/config
-  sed -i "s,^turnSecret=.*,turnSecret=$T_Secret,g" $SCRIPT_PATH/config
+  sed -i "s,^E_Mail=.*,E_Mail=$E_Mail,g" $SCRIPT_PATH/config
+  sed -i "s,^T_Server=.*,T_Server=$T_Server,g" $SCRIPT_PATH/config
+  sed -i "s,^T_Secret=.*,T_Secret=$T_Secret,g" $SCRIPT_PATH/config
   printf "Config file created successfully!"
   sleep 2
 }
@@ -118,7 +119,7 @@ EOF
 function secret_generator() {
 
   # Check if BBB install or not!
-  if ! dpkg --get-selections | grep -q "^$BBB_PKG[[:space:]]*install$"
+  if ! dpkg --get-selections | grep -q "^bbb-web[[:space:]]*install$"
   then
     if [[ ! -f $SCRIPT_PATH/secret ]]
     then
@@ -186,8 +187,8 @@ function check_private_network() {
 
   # Check private network connection
   printf "Input the NFS private IP: "
-  read NFS_IP
-  if ping -c1 $NFS_IP 1>/dev/null 2>/dev/null
+  read -r NFS_IP
+  if ping -c1 "$NFS_IP" 1>/dev/null 2>/dev/null
   then
     mount_nfs
   else
@@ -206,40 +207,43 @@ function mount_nfs() {
   fi
   if ( ! grep -q nfs "/etc/fstab" )
   then
-    echo '$NFS_IP:/nfs /nfs/ nfs defaults 0 0' >> /etc/fstab
+    echo "$NFS_IP:/nfs /nfs/ nfs defaults 0 0" >> /etc/fstab
   fi
   mount -a
 }
- 
+
 function connect_private_network() {
 
   create_openconnect_config
   sleep 1
+
+  # shellcheck source=openconnect
+  # shellcheck disable=SC1091
   source $SCRIPT_PATH/openconnect
+
   # Check for openconnect service
   if [[ ! -f /etc/systemd/system/openconnect.service ]]
   then
     # Check openconnect is installed or not
-    OC_PKG=openconnect
-    if ! dpkg --get-selections | grep -q "^$OC_PKG[[:space:]]*install$";
+    if ! dpkg --get-selections | grep -q "^openconnect[[:space:]]*install$";
     then
-      apt update -q && apt install $OC_PKG -y
+      apt update -q && apt install openconnect -y
     fi
 
 # Create openconnect service file
 cat > /etc/systemd/system/openconnect.service << EOF
-    [Unit]
-    Description=Connect to private network
-    After=network.target
+[Unit]
+Description=Connect to private network
+After=network.target
 
-    [Service]
-    Type=simple
-    Environment=password=$OC_PASS
-    ExecStart=/bin/sh -c 'echo $password | sudo openconnect --passwd-on-stdin --user=$OC_USER --no-cert-check https://$OC_IP:$OC_PORT'
-    Restart=always
+[Service]
+Type=simple
+Environment=password=$OC_Pass
+ExecStart=/bin/sh -c 'echo $password | sudo openconnect --passwd-on-stdin --user=$OC_User --no-cert-check https://$OC_IP:$OC_PORT'
+Restart=always
 
-    [Install]
-    WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 EOF
     systemctl daemon-reload
     systemctl start openconnect.service
@@ -264,13 +268,13 @@ EOF
 
   # Get input from user
   printf "Input openconnect IP address: "
-  read OC_IP
+  read -r OC_IP
   printf "Input openconnect Port number: "
-  read OC_PORT
+  read -r OC_PORT
   printf "Input openconnect username: "
-  read OC_User
+  read -r OC_User
   printf "Input openconnect password: "
-  read OC_Pass
+  read -r OC_Pass
   printf "Creating config file...\n"
   sleep 1
 
@@ -286,7 +290,7 @@ EOF
 function install_update() {
 
   # Check for install or update BBB
-  if ! dpkg --get-selections | grep -q "^$BBB_PKG[[:space:]]*install$";
+  if ! dpkg --get-selections | grep -q "^bbb-web[[:space:]]*install$";
   then
     # Install new BBB on clean server
     prepair_server
@@ -316,25 +320,25 @@ function update_everything() {
 }
 
 function bbb_install_command() {
-  wget -qO- https://ubuntu.bigbluebutton.org/bbb-install.sh | bash -s -- -v xenial-22 -s $FQDN -e $eMail -c $turnServer:$turnSecret -w
+  wget -qO- https://ubuntu.bigbluebutton.org/bbb-install.sh | bash -s -- -v xenial-22 -s "$FQDN" -e "$E_Mail" -c "$T_Server":"$T_Secret" -w
 }
 
 function apply-config() {
   if [[ -f $BBB_CONF_PATH/apply-config.sh ]]
   then
-      rm -rf $BBB_CONF_PATH/apply-config.sh
+      rm -rf "$BBB_CONF_PATH/apply-config.sh"
   fi
-  chmod +x $SCRIPT_ROOT/apply-config.sh
-  cp $SCRIPT_ROOT/apply-config.sh $BBB_CONF_PATH/
+  chmod +x "$SCRIPT_ROOT/apply-config.sh"
+  cp "$SCRIPT_ROOT/apply-config.sh" "$BBB_CONF_PATH/"
   bbb-conf --restart
 }
 
 function press_any_key() {
   printf "\n\nPress any key to back to menu...!"
-  while [ true ]
+  while true
     do
-    read -n 1
-    if [ $? = 0 ]
+    read -r -n 1 Key
+    if [ "$Key" = 0 ]
     then
       clear ; menu ;
     fi
@@ -349,10 +353,10 @@ clear='\e[0m'
 
 # Color Functions
 ColorGreen(){
-	echo -ne $green$1$clear
+	echo -ne "$green$1$clear"
 }
 ColorBlue(){
-	echo -ne $blue$1$clear
+	echo -ne "$blue$1$clear"
 }
 # Main menu
 menu(){
@@ -365,7 +369,7 @@ $(ColorGreen '3)') Connect to private network and mount NFS
 $(ColorGreen '4)') Apply config to BBB
 $(ColorGreen '0)') Exit
 $(ColorBlue 'Choose an option:') "
-        read a
+        read -r a
         case $a in
 	        1) create_config_file ; press_any_key ;;
 	        2) install_update ; press_any_key ;;
@@ -373,7 +377,7 @@ $(ColorBlue 'Choose an option:') "
 	        4) apply-config ; press_any_key ;;
 
 		0) clear; exit 0 ;;
-		*) echo -e $red"Wrong option."$clear; sleep 1; clear; menu;;
+		*) echo -e "$red""Wrong option.""$clear"; sleep 1; clear; menu;;
         esac
 }
 
