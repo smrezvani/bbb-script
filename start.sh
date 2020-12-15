@@ -144,7 +144,7 @@ function prepair_server() {
   fi
 
   # Set time zone
-  timedatectl set-timezone $TIME_ZONE
+  timedatectl set-timezone "$TIME_ZONE"
 
   check_shecan
   
@@ -201,6 +201,11 @@ function check_private_network() {
 }
 
 function mount_nfs() {
+  # Check openconnect is installed or not
+  if ! dpkg --get-selections | grep -q "^nfs-common[[:space:]]*install$"
+  then
+    apt update -q && apt install nfs-common -y
+  fi
   if [[ ! -d /nfs/ ]]
   then
       mkdir /nfs
@@ -276,7 +281,6 @@ EOF
   printf "Input openconnect password: "
   read -r OC_Pass
   printf "Creating config file...\n"
-  sleep 1
 
   # Change variables
   sed -i "s,^ocservIP=.*,ocservIP=$OC_IP,g" $SCRIPT_PATH/openconnect
