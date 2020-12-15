@@ -7,51 +7,51 @@ SCRIPT_PATH=/root/.bbb-script
 RUN() {
 
   # Check for root user
-  if [ $EUID != 0 ]; 
+  if [ $EUID != 0 ]
   then 
-    printf "This script should run as root.\n";
-    sudo -i
+    printf "This script should run as root.\n"
+    exit 0
+  else
+    # Check for config file
+    if [[ ! -f $SCRIPT_PATH/config ]]
+    then
+      config_generator
+    fi
+
+    # Source the config file
+    # shellcheck source=config
+    # shellcheck disable=SC1091
+    source $SCRIPT_PATH/config
+
+    # Check for BBB secret file
+    if [[ ! -f $SCRIPT_PATH/secret ]]
+    then
+      secret_generator
+    fi
+
+    # Check for BBB properties file
+    if [[ ! -f $SCRIPT_PATH/bigbluebutton.properties ]]
+    then
+      cp /root/bbb-script/bigbluebutton.properties $SCRIPT_PATH
+    fi
+
+    # Check for BBB settings file
+    if [[ ! -f $SCRIPT_PATH/settings.yml ]]
+    then
+      cp /root/bbb-script/settings.yml $SCRIPT_PATH
+    fi
+
+    # Check for BBB bigbluebutton-default
+    if [[ ! -d $SCRIPT_PATH/bigbluebutton-default/ ]]
+    then
+      mkdir -p $SCRIPT_PATH/bigbluebutton-default/
+      cp -r /root/bbb-script/bigbluebutton-default/* $SCRIPT_PATH/bigbluebutton-default/
+    fi
+
+    # Create menu
+    clear
+    menu
   fi
-
-  # Check for config file
-  if [[ ! -f $SCRIPT_PATH/config ]]
-  then
-    config_generator
-  fi
-
-  # Source the config file
-  # shellcheck source=config
-  # shellcheck disable=SC1091
-  source $SCRIPT_PATH/config
-
-  # Check for BBB secret file
-  if [[ ! -f $SCRIPT_PATH/secret ]]
-  then
-    secret_generator
-  fi
-
-  # Check for BBB properties file
-  if [[ ! -f $SCRIPT_PATH/bigbluebutton.properties ]]
-  then
-    cp /root/bbb-script/bigbluebutton.properties $SCRIPT_PATH
-  fi
-
-  # Check for BBB settings file
-  if [[ ! -f $SCRIPT_PATH/settings.yml ]]
-  then
-    cp /root/bbb-script/settings.yml $SCRIPT_PATH
-  fi
-
-  # Check for BBB bigbluebutton-default
-  if [[ ! -d $SCRIPT_PATH/bigbluebutton-default/ ]]
-  then
-    mkdir -p $SCRIPT_PATH/bigbluebutton-default/
-    cp -r /root/bbb-script/bigbluebutton-default/* $SCRIPT_PATH/bigbluebutton-default/
-  fi
-
-  # Create menu
-  clear
-  menu
 
 }
 
@@ -163,7 +163,7 @@ function check_shecan() {
   # Check for Shecan nameservers
   SHECAN="nameserver 178.22.122.100"
   SHECAN_IS_SET=$(grep -Fxq "$SHECAN" /etc/resolv.conf)
-  if [[ ! $SHECAN_IS_SET ]]
+  if ! $SHECAN_IS_SET
   then
     printf "Shecan is not Active. Do you want to active it?\n"
     select yn in "Yes" "No"; do
@@ -225,7 +225,7 @@ function connect_private_network() {
   if [[ ! -f /etc/systemd/system/openconnect.service ]]
   then
     # Check openconnect is installed or not
-    if ! dpkg --get-selections | grep -q "^openconnect[[:space:]]*install$";
+    if ! dpkg --get-selections | grep -q "^openconnect[[:space:]]*install$"
     then
       apt update -q && apt install openconnect -y
     fi
@@ -290,14 +290,14 @@ EOF
 function install_update() {
 
   # Check for install or update BBB
-  if ! dpkg --get-selections | grep -q "^bbb-web[[:space:]]*install$";
+  if ! dpkg --get-selections | grep -q "^bbb-web[[:space:]]*install$"
   then
     # Install new BBB on clean server
     prepair_server
     new_install
   else
     # Update existing BBB instalation
-    new_install
+    update_bbb
   fi
 }
 
