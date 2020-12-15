@@ -173,7 +173,7 @@ function check_shecan() {
         esac
     done
   fi
-  apt clean && apt update -q && apt upgrade -y && apt autoremove -y
+  apt clean && apt update && apt upgrade -y && apt autoremove -y
 }
 
 function active_shecan() {
@@ -204,7 +204,7 @@ function mount_nfs() {
   # Check openconnect is installed or not
   if ! dpkg --get-selections | grep -q "^nfs-common[[:space:]]*install$"
   then
-    apt update -q && apt install nfs-common -y
+    apt update && apt install nfs-common -y
   fi
   if [[ ! -d /nfs/ ]]
   then
@@ -232,7 +232,7 @@ function connect_private_network() {
     # Check openconnect is installed or not
     if ! dpkg --get-selections | grep -q "^openconnect[[:space:]]*install$"
     then
-      apt update -q && apt install openconnect -y
+      apt update && apt install openconnect -y
     fi
 
 # Create openconnect service file
@@ -317,7 +317,7 @@ function update_bbb() {
 }
 
 function update_everything() {
-  apt update -q && apt upgrade -y && apt autoremove -y
+  apt update && apt upgrade -y && apt autoremove -y
   sleep 2
   bbb_install_command
   apply-config
